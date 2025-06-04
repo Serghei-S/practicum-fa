@@ -1,0 +1,1 @@
+celery -A app.core.core.app worker --loglevel=INFO --pool=threads

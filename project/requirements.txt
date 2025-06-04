@@ -46,3 +46,5 @@ tzdata==2025.2
 uvicorn==0.34.0
 vine==5.1.0
 wcwidth==0.2.13
+celery[redis]==5.5.0
+redislite==6.2.912183

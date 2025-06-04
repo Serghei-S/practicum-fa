@@ -1,14 +1,24 @@
-from fastapi import APIRouter, HTTPException
-from app.schemas.graph import GraphRequest, PathResult
-from app.services.tsp import dijkstra
+from fastapi import APIRouter
+from app.schemas.graph import GraphRequest
+from app.tasks.tasks import dijkstra_result, dijkstra_task
 
 router = APIRouter()
 
-@router.post("/shortest-path/", response_model=PathResult)
+
+@router.post("/shortest-path/")
 def shortest_path(request: GraphRequest):
     nodes = request.graph.nodes
     edges = request.graph.edges
-    path, total_distance = dijkstra(nodes, edges, request.start, request.end)
-    if not path:
-        raise HTTPException(status_code=404, detail="Путь не найден")
-    return {"path": path, "total_distance": float(total_distance)}
+
+    task = dijkstra_task.delay(nodes, edges, request.start, request.end)
+    return {"task_id": task.id}
+
+
+@router.get("/shortest-path/{task_id}/status")
+async def shortest_path_status(task_id: str):
+    result = dijkstra_result(task_id)
+    return {
+        "task_id": task_id,
+        "status": result.status,
+        "result": result.result if result.successful() else None
+    }

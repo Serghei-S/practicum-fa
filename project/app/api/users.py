@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Form
 from sqlalchemy.orm import Session
 from app.cruds import user as crud_user
 from app.schemas import user as user_schema
@@ -7,6 +7,7 @@ from app.core.config import JWT_SECRET, JWT_ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUT
 import jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer
+from typing import Annotated
 
 router = APIRouter()
 
@@ -34,8 +35,8 @@ def sign_up(user: user_schema.UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 @router.post("/login", response_model=user_schema.Token)
-def login(user: user_schema.UserLogin, db: Session = Depends(get_db)):
-    db_user = crud_user.get_user_by_email(db, user.email)
+def login(user: Annotated[user_schema.UserLogin, Form()], db: Session = Depends(get_db)):
+    db_user = crud_user.get_user_by_email(db, user.username)
     if not db_user or not crud_user.verify_password(user.password, db_user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
